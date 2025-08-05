@@ -1,0 +1,152 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GT3 Style Dashboard</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Arial', sans-serif;
+      background-color: #000;
+      color: #fff;
+      overflow: hidden;
+    }
+    .dashboard {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-gap: 10px;
+      padding: 20px;
+    }
+    .panel {
+      background: #111;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 10px;
+      text-align: center;
+    }
+    .panel h2 {
+      color: #ff0;
+      margin: 5px 0;
+    }
+    .value {
+      font-size: 2.5em;
+      color: #0f0;
+    }
+    canvas {
+      width: 100%;
+      height: 100px;
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <div class="panel">
+      <h2>RPM</h2>
+      <canvas id="rpmChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Speed (kph)</h2>
+      <div class="value" id="speed">0</div>
+    </div>
+    <div class="panel">
+      <h2>Throttle</h2>
+      <canvas id="throttleChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Brake</h2>
+      <canvas id="brakeChart"></canvas>
+    </div>
+    <div class="panel">
+      <h2>Gear</h2>
+      <div class="value" id="gear">N</div>
+    </div>
+    <div class="panel">
+      <h2>Lap Time</h2>
+      <div class="value" id="lapTime">0.00</div>
+    </div>
+  </div>
+
+  <script>
+    let rpmData = [];
+    let throttleData = [];
+    let brakeData = [];
+
+    const createChart = (ctxId, label, color, yMax = 1) => {
+      return new Chart(document.getElementById(ctxId), {
+        type: 'line',
+        data: {
+          labels: Array(10).fill(''),
+          datasets: [{
+            label: label,
+            borderColor: color,
+            data: [],
+            fill: false,
+            tension: 0.3,
+          }]
+        },
+        options: {
+          animation: false,
+          scales: {
+            y: {
+              min: 0,
+              max: yMax,
+              ticks: { color: '#fff' }
+            },
+            x: { ticks: { display: false } }
+          },
+          plugins: { legend: { display: false } }
+        }
+      });
+    };
+    
+    const rpmChart = createChart("rpmChart", "RPM", "#0ff", 6000);
+    const throttleChart = createChart("throttleChart", "Throttle", "#0f0", 1);
+    const brakeChart = createChart("brakeChart", "Brake", "#f00", 1);
+
+    async function updateTelemetry() {
+      try {
+        const response = await fetch("/telemetry");
+        if (!response.ok) throw new Error("Network response was not ok");
+        const data = await response.json();
+
+        document.getElementById("speed").innerText = data.speed_kph.toFixed(1);
+        document.getElementById("gear").innerText = data.gear;
+        document.getElementById("lapTime").innerText = data.lap_time.toFixed(2);
+
+        // Update charts
+        const limit = 10;
+
+        rpmData.push(data.rpm);
+        if (rpmData.length > limit) rpmData.shift();
+        rpmChart.data.datasets[0].data = rpmData;
+        rpmChart.update();
+
+        throttleData.push(data.throttle);
+        if (throttleData.length > limit) throttleData.shift();
+        throttleChart.data.datasets[0].data = throttleData;
+        throttleChart.update();
+
+        brakeData.push(data.brake);
+        if (brakeData.length > limit) brakeData.shift();
+        brakeChart.data.datasets[0].data = brakeData;
+        brakeChart.update();
+      } catch (error) {
+        document.getElementById("speed").innerText = "ERR";
+        document.getElementById("gear").innerText = "-";
+        document.getElementById("lapTime").innerText = "ERR";
+        rpmChart.data.datasets[0].data = [];
+        rpmChart.update();
+        throttleChart.data.datasets[0].data = [];
+        throttleChart.update();
+        brakeChart.data.datasets[0].data = [];
+        brakeChart.update();
+      }
+    }
+
+    setInterval(updateTelemetry, 200);
+  </script>
+</body>
+</html>

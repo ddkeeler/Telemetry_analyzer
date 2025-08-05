@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ACC Dashboard</title>
+  <!-- Removed meta refresh to avoid unnecessary page reloads -->
+  <style>
+    body { font-family: Arial; background: #111; color: #0f0; text-align: center; }
+    h1 { margin-top: 30px; }
+    .value { font-size: 2em; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <h1>Assetto Corsa Telemetry</h1>
+  <div id="telemetry">
+    <div class="value">Loading...</div>
+  </div>
+
+  <script>
+    function fetchData() {
+      fetch("/telemetry")
+        .then(response => response.json())
+        .then(data => {
+          document.getElementById("telemetry").innerHTML = `
+            <div class="value">Speed: ${data.speed_kph.toFixed(1)} kph</div>
+            <div class="value">Throttle: ${(data.throttle * 100).toFixed(0)}%</div>
+            <div class="value">Brake: ${(data.brake * 100).toFixed(0)}%</div>
+            <div class="value">Gear: ${data.gear}</div>
+            <div class="value">RPM: ${data.rpm}</div>
+            <div class="value">Time: ${data.lap_time.toFixed(2)} s</div>
+          `;
+        })
+        .catch(error => {
+          document.getElementById("telemetry").innerHTML = `
+            <div class="value">Error loading telemetry data.</div>
+          `;
+          console.error("Error fetching telemetry:", error);
+        });
+    }
+
+    setInterval(fetchData, 200);  // update every 200ms
+    fetchData();  // first load
+  </script>
+</body>
+</html>
