@@ -5,7 +5,7 @@ import time
 app = Flask(__name__)
 
 # Load test lap data (fast lap)
-telemetry_data = pd.read_csv("simulated_telemetry_fast_lap.csv")
+telemetry_data = pd.read_csv("ACC Analyzer/simulated_telemetry_fast_lap.csv")
 telemetry_data = telemetry_data.to_dict(orient="records")
 
 @app.route("/")

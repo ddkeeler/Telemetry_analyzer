@@ -11,7 +11,7 @@ sock.bind((UDP_IP, UDP_PORT))
 
 print(f"Listening for ACC telemetry on UDP port {UDP_PORT}...")
 
-with open("simulated_telemetry_slow_lap.csv", "r") as f:
+with open("ACC Analyzer/simulated_telemetry_slow_lap.csv", "r") as f:
     reader = csv.DictReader(f)
     telemetry_log = list(reader)
 
